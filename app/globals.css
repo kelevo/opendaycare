@@ -43,3 +43,11 @@ a {
   border: 3px solid transparent;
   background-clip: content-box;
 }
+
+.kid {
+  transition: 0.15s;
+}
+.kid:hover {
+  border-color: #f2a78e;
+  transform: translateY(-2px);
+}
