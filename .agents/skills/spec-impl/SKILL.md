@@ -208,6 +208,9 @@ Once confirmed, follow these rules during the entire implementation:
 Next step: verify the spec's acceptance criteria one by one.
 If they all pass, update the spec's state to "Implemented" (or the equivalent
 in your repo's language) and make the final commit before merging this branch.
+
+After marking the spec as "Implemented", run `/spec-verify <NN-slug>` to
+automatically verify all acceptance criteria are met.
 ```
 
 ---
