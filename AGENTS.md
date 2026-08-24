@@ -28,3 +28,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - /spec: Using this skill for make the specifications.
 - /spec-impl: Using this skill for implement the specifications.
 - /spec-verify: Using this skill for verify the acceptance criteria of an implemented spec.
+
+## GitHub Actions
+- When using `/oc` from GitHub comments, invoke subagents WITHOUT the `@` prefix:
+  - Use: `/oc spec-verify 04-agregar-nino-modal`
+  - Do NOT use: `/oc @spec-verify 04-agregar-nino-modal`
+  - The `@` syntax fails with "Failed to parse JSON" error in the GitHub Action due to a bug in `anomalyco/opencode/github@latest`.
