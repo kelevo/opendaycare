@@ -15,7 +15,7 @@ export type Kid = {
   enrollment: string;
   avatarBg: string;
   avatarColor: string;
-  allergy?: { label: "MANÍ" | "LACTOSA"; note: string };
+  allergy?: { label: string; note: string };
   needsLink?: boolean;
   linkedParents: ParentLink[];
 };
@@ -136,4 +136,73 @@ export const kids: Kid[] = [
 
 export function getKidBySlug(slug: string): Kid | undefined {
   return kids.find((kid) => kid.slug === slug);
+}
+
+export type KidInput = {
+  name: string;
+  birthday: string; // dd/mm/aaaa
+  room: string;
+  allergies?: string;
+  medicalNotes?: string;
+};
+
+const MONTHS = [
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
+];
+
+function slugify(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function ageFromBirthday(birthday: string): number {
+  const [day, month, year] = birthday.split("/").map(Number);
+  const birth = new Date(year, month - 1, day);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+    age--;
+  }
+  return Math.max(0, age);
+}
+
+export function buildKidFromInput(input: KidInput, extraExisting: string[] = []): Kid {
+  const name = input.name.trim();
+  const parts = name.split(/\s+/);
+  const firstName = parts[0];
+  const lastName = parts.slice(1).join(" ");
+  const [day, month, year] = input.birthday.split("/").map(Number);
+
+  const usedSlugs = new Set([...kids.map((kid) => kid.slug), ...extraExisting]);
+  const baseSlug = slugify(name);
+  let slug = baseSlug;
+  let suffix = 2;
+  while (usedSlugs.has(slug)) {
+    slug = `${baseSlug}-${suffix}`;
+    suffix++;
+  }
+
+  const allergies = input.allergies?.trim();
+  const medicalNotes = input.medicalNotes?.trim();
+
+  return {
+    slug,
+    firstName,
+    lastName,
+    age: ageFromBirthday(input.birthday),
+    birthday: `${day} ${MONTHS[month - 1]} ${year}`,
+    room: input.room,
+    enrollment: "—",
+    avatarBg: "#A9D9E8",
+    avatarColor: "#1F7A93",
+    allergy: allergies ? { label: allergies.toUpperCase(), note: medicalNotes ?? "" } : undefined,
+    needsLink: false,
+    linkedParents: [],
+  };
 }
