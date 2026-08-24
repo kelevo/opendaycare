@@ -1,10 +1,17 @@
+"use client";
+
+import { useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import KidCard from "@/components/kids/KidCard";
-import { kids } from "@/lib/kids";
+import AddKidModal from "@/components/kids/AddKidModal";
+import { kids, type Kid } from "@/lib/kids";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
 export default function KidsPage() {
+  const [addedKids, setAddedKids] = useState<Kid[]>([]);
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F6ECDF" }}>
       <Sidebar active="kids" />
@@ -34,8 +41,8 @@ export default function KidsPage() {
               </div>
               <h1 style={{ ...fredoka, fontWeight: 600, fontSize: 30, margin: 0, color: "#3F362E" }}>Niños</h1>
             </div>
-            <a
-              href="#"
+            <button
+              onClick={() => setShowModal(true)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -46,6 +53,8 @@ export default function KidsPage() {
                 color: "#fff",
                 fontWeight: 800,
                 fontSize: 14.5,
+                border: "none",
+                cursor: "pointer",
                 boxShadow: "0 8px 18px -8px rgba(238,129,100,.7)",
               }}
             >
@@ -62,7 +71,7 @@ export default function KidsPage() {
                 <path d="M12 5v14M5 12h14" />
               </svg>
               Agregar niño
-            </a>
+            </button>
           </div>
           <div
             style={{
@@ -103,9 +112,23 @@ export default function KidsPage() {
             {kids.map((kid) => (
               <KidCard key={kid.slug} kid={kid} />
             ))}
+            {addedKids.map((kid) => (
+              <KidCard key={kid.slug} kid={kid} href="#" />
+            ))}
           </div>
         </div>
       </main>
+
+      {showModal && (
+        <AddKidModal
+          existingSlugs={addedKids.map((kid) => kid.slug)}
+          onClose={() => setShowModal(false)}
+          onSave={(kid) => {
+            setAddedKids((prev) => [...prev, kid]);
+            setShowModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

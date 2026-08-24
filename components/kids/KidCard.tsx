@@ -2,7 +2,7 @@ import type { Kid } from "@/lib/kids";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
-export default function KidCard({ kid }: { kid: Kid }) {
+export default function KidCard({ kid, href = `/kids/${kid.slug}` }: { kid: Kid; href?: string }) {
   const parentCount = kid.linkedParents.length;
   const parentLabel =
     parentCount === 0 ? "sin padres vinculados" : parentCount === 1 ? "1 padre vinculado" : `${parentCount} padres vinculados`;
@@ -10,7 +10,7 @@ export default function KidCard({ kid }: { kid: Kid }) {
   return (
     <a
       className="kid"
-      href={`/kids/${kid.slug}`}
+      href={href}
       style={{
         display: "flex",
         alignItems: "center",
