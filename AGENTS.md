@@ -26,4 +26,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Spex Driven Development
 - /spec: Using this skill for make the specifications.
-- /spect-impl: Using this skill for implement the specifications.
+- /spec-impl: Using this skill for implement the specifications.
+- /spec-verify: Using this skill for verify the acceptance criteria of an implemented spec.
