@@ -1,15 +1,10 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
-import { getKidBySlug, kids, type ParentLink } from "@/lib/kids";
+import { getKidBySlug, kids } from "@/lib/kids";
+import VincularPadreModalWrapper from "@/components/kids/VincularPadreModalWrapper";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
-
-const parentAvatarPalette: { bg: string; color: string }[] = [
-  { bg: "#C9B6E8", color: "#fff" },
-  { bg: "#A9C7E8", color: "#fff" },
-  { bg: "#A9D9E8", color: "#fff" },
-  { bg: "#F4B8CC", color: "#fff" },
-];
 
 export function generateStaticParams() {
   return kids.map((kid) => ({ slug: kid.slug }));
@@ -26,7 +21,7 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
 
       <main style={{ flex: 1, minWidth: 0, height: "100vh", overflowY: "auto" }}>
         <div style={{ maxWidth: 820, width: "100%", margin: "0 auto", padding: "34px 40px 80px" }}>
-          <a
+          <Link
             href="/kids"
             style={{
               display: "flex",
@@ -51,7 +46,7 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
               <path d="m15 18-6-6 6-6" />
             </svg>
             Volver a Niños
-          </a>
+          </Link>
           <div style={{ display: "flex", gap: 26, alignItems: "flex-start", flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 300, display: "flex", flexDirection: "column", gap: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
@@ -170,56 +165,10 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
                 </svg>
                 Resumen del día
               </a>
-              <div style={{ background: "#FFFDF9", border: "1px solid #ECE0D0", borderRadius: 16, padding: "16px 18px" }}>
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    letterSpacing: ".8px",
-                    color: "#8A7C6D",
-                    marginBottom: 14,
-                  }}
-                >
-                  PADRES VINCULADOS
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {kid.linkedParents.map((parent, index) => (
-                    <ParentRow key={parent.id} parent={parent} index={index} />
-                  ))}
-                  <a
-                    href="#"
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0 0" }}
-                  >
-                    <span
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        border: "1.5px dashed #D8CBBA",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#B0A290",
-                        flex: "none",
-                      }}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 5v14M5 12h14" />
-                      </svg>
-                    </span>
-                    <span style={{ fontWeight: 800, fontSize: 14.5, color: "#C5503A" }}>Vincular otro padre</span>
-                  </a>
-                </div>
-              </div>
+              <VincularPadreModalWrapper
+                kidName={`${kid.firstName} ${kid.lastName}`}
+                linkedParents={kid.linkedParents}
+              />
             </div>
           </div>
         </div>
@@ -240,52 +189,6 @@ function DataRow({ label, value, last }: { label: string; value: string; last?: 
     >
       <span style={{ color: "#94887B", fontSize: 14.5 }}>{label}</span>
       <span style={{ fontWeight: 800, color: "#3F362E", fontSize: 14.5 }}>{value}</span>
-    </div>
-  );
-}
-
-function ParentRow({ parent, index }: { parent: ParentLink; index: number }) {
-  const avatar = parentAvatarPalette[index % parentAvatarPalette.length];
-  const sub = parent.status === "active" ? `${parent.role} · activa` : `${parent.role} · invitación enviada`;
-  const active = parent.status === "active";
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: avatar.bg,
-          color: avatar.color,
-          ...fredoka,
-          fontWeight: 600,
-          fontSize: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flex: "none",
-        }}
-      >
-        {parent.name[0]}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 14.5, color: "#3F362E" }}>{parent.name}</div>
-        <div style={{ fontSize: 12.5, color: "#A89A8B" }}>{sub}</div>
-      </div>
-      <span
-        style={{
-          flex: "none",
-          fontSize: 10.5,
-          fontWeight: 800,
-          padding: "4px 9px",
-          borderRadius: 999,
-          background: active ? "#CFEBD8" : "#F7E7A6",
-          color: active ? "#3E9B6C" : "#9A7B1E",
-        }}
-      >
-        {active ? "ACTIVA" : "PENDIENTE"}
-      </span>
     </div>
   );
 }

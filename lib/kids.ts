@@ -1,7 +1,7 @@
 export type ParentLink = {
   id: string;
   name: string;
-  role: "Mamá" | "Papá";
+  role: "Mamá" | "Papá" | "Tutor/a";
   status: "active" | "pending";
 };
 
