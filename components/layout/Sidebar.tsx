@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import SidebarNewPostButton from "./SidebarNewPostButton";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
@@ -73,38 +74,7 @@ export default function Sidebar({ active }: SidebarProps) {
           <div style={{ fontSize: 11.5, color: "#A89A8B", marginTop: 2 }}>Sala Soles</div>
         </div>
       </a>
-      <a
-        href="#"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          width: "100%",
-          padding: 12,
-          borderRadius: 14,
-          background: "linear-gradient(180deg,#F4977E,#EE8164)",
-          color: "#fff",
-          fontWeight: 800,
-          fontSize: 14.5,
-          boxShadow: "0 8px 18px -8px rgba(238,129,100,.75)",
-          marginBottom: 18,
-        }}
-      >
-        <svg
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Nueva publicación
-      </a>
+      <SidebarNewPostButton />
       <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
         {navItems.map((item) => {
           const isActive = item.key === active;
