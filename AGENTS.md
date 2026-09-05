@@ -28,6 +28,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Toda** migración/tabla/cambio de esquema o datos en Supabase **DEBE** generar su archivo de migración SQL en `supabase/migrations/` con el formato `YYYYMMDDHHMMSS_<nombre>.sql`. Esto es obligatorio, nunca opcional.
 - El cambio se aplica al proyecto remoto vía MCP (`apply_migration` / `execute_sql`) y, en paralelo, se versiona el mismo SQL en el archivo de migración local. Ambos deben quedar sincronizados.
 - Si ves un spec o tarea que toca la BD y no existe `supabase/migrations/`, detenete y creá el archivo de migración antes de continuar.
+- **Cualquier** archivo creado que tenga que ver con la base de datos (migrations, seeds, schemas, docs SQL, tipos, etc.) DEBE ir a la carpeta `specs/database/`. Si no existe la carpeta, se crea.
+
+## Base de datos (specs/database)
+- Todos los archivos relacionados con la BD (SQL, esquemas, seeds, documentación, tipos) se almacenan en `specs/database/`.
+- Los archivos de migración SQL se siguen versionando en `supabase/migrations/` con el formato `YYYYMMDDHHMMSS_<nombre>.sql`, pero copias/referencias o archivos complementarios de BD van a `specs/database/`.
 
 ## Spex Driven Development
 - /spec: Using this skill for make the specifications.
