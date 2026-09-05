@@ -24,6 +24,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Playwright: screenshots and anything Playwright-related go in `.playwright-mcp/` (gitignored).
 - Context7: use the Context7 MCP for up-to-date framework docs.
 
+## Base de datos (Supabase)
+- **Toda** migración/tabla/cambio de esquema o datos en Supabase **DEBE** generar su archivo de migración SQL en `supabase/migrations/` con el formato `YYYYMMDDHHMMSS_<nombre>.sql`. Esto es obligatorio, nunca opcional.
+- El cambio se aplica al proyecto remoto vía MCP (`apply_migration` / `execute_sql`) y, en paralelo, se versiona el mismo SQL en el archivo de migración local. Ambos deben quedar sincronizados.
+- Si ves un spec o tarea que toca la BD y no existe `supabase/migrations/`, detenete y creá el archivo de migración antes de continuar.
+
 ## Spex Driven Development
 - /spec: Using this skill for make the specifications.
 - /spec-impl: Using this skill for implement the specifications.
