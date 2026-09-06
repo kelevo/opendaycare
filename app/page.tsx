@@ -1,11 +1,44 @@
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar, { type UserProfile } from "@/components/layout/Sidebar";
+import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
-export default function Home() {
+function userRoleLabel(role: string): string {
+  if (role === "admin") return "Admin";
+  if (role === "parent") return "Familia";
+  return "Maestra";
+}
+
+export default async function Home() {
+  const supabase = createClient(await cookies());
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let profile: UserProfile | null = null;
+
+  if (user) {
+    const { data: profileRow } = await supabase
+      .from("users")
+      .select("full_name, avatar_url, role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileRow) {
+      profile = {
+        fullName: profileRow.full_name,
+        avatarUrl: profileRow.avatar_url,
+        initial: (profileRow.full_name?.[0] ?? "?").toUpperCase(),
+        roleLabel: `${userRoleLabel(profileRow.role)} · Soles`,
+      };
+    }
+  }
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F6ECDF" }}>
-      <Sidebar active="feed" />
+      <Sidebar active="feed" user={profile} />
 
       <main style={{ flex: 1, minWidth: 0, height: "100vh", overflowY: "auto" }}>
         <div style={{ maxWidth: 760, width: "100%", margin: "0 auto", padding: "34px 40px 80px" }}>
@@ -22,7 +55,7 @@ export default function Home() {
               GUARDERÍA · SALA SOLES
             </div>
             <h1 style={{ ...fredoka, fontWeight: 600, fontSize: 30, margin: 0, color: "#3F362E" }}>
-              Buenas, Caro
+              Buenas, {profile?.fullName.split(" ")[0] ?? "Caro"}
             </h1>
             <p style={{ margin: "5px 0 0", color: "#94887B", fontSize: 14.5 }}>12 niños · martes 17 jun</p>
           </div>
@@ -57,7 +90,7 @@ export default function Home() {
                 flex: "none",
               }}
             >
-              C
+              {profile?.initial ?? "C"}
             </div>
             <span style={{ flex: 1, color: "#A89A8B", fontSize: 15 }}>Compartí un momento…</span>
             <span

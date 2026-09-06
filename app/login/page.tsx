@@ -1,6 +1,36 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
 export default function LoginPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setError("Credenciales inválidas. Verificá tu email y contraseña.");
+      setSubmitting(false);
+      return;
+    }
+
+    router.replace("/");
+  }
+
   return (
     <div
       style={{
@@ -136,88 +166,105 @@ export default function LoginPage() {
             Ingresá para ver el día de hoy.
           </p>
 
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: ".7px",
-              color: "#94887B",
-              marginBottom: 8,
-            }}
-          >
-            EMAIL
-          </div>
-          <input
-            type="email"
-            defaultValue="caro@opendaycare.com"
-            style={{
-              width: "100%",
-              padding: "14px 16px",
-              borderRadius: 14,
-              border: "1.5px solid #EADFD0",
-              background: "#fff",
-              fontSize: 15,
-              color: "#3F362E",
-              marginBottom: 18,
-            }}
-          />
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: ".7px",
-              color: "#94887B",
-              marginBottom: 8,
-            }}
-          >
-            CONTRASEÑA
-          </div>
-          <input
-            type="password"
-            placeholder="••••••••"
-            style={{
-              width: "100%",
-              padding: "14px 16px",
-              borderRadius: 14,
-              border: "1.5px solid #EADFD0",
-              background: "#fff",
-              fontSize: 15,
-              color: "#3F362E",
-              marginBottom: 10,
-            }}
-          />
-          <div style={{ textAlign: "right", marginBottom: 20 }}>
-            <a
-              href="#"
+          <form onSubmit={handleSubmit}>
+            <div
               style={{
-                color: "#C5503A",
-                fontSize: 13.5,
+                fontSize: 12,
                 fontWeight: 700,
-                cursor: "pointer",
+                letterSpacing: ".7px",
+                color: "#94887B",
+                marginBottom: 8,
               }}
             >
-              ¿Olvidaste tu contraseña?
-            </a>
-          </div>
+              EMAIL
+            </div>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="tu@email.com"
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 14,
+                border: "1.5px solid #EADFD0",
+                background: "#fff",
+                fontSize: 15,
+                color: "#3F362E",
+                marginBottom: 18,
+              }}
+            />
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: ".7px",
+                color: "#94887B",
+                marginBottom: 8,
+              }}
+            >
+              CONTRASEÑA
+            </div>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 14,
+                border: "1.5px solid #EADFD0",
+                background: "#fff",
+                fontSize: 15,
+                color: "#3F362E",
+                marginBottom: 10,
+              }}
+            />
+            <div style={{ textAlign: "right", marginBottom: 20 }}>
+              <a
+                href="#"
+                style={{
+                  color: "#C5503A",
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
 
-          <a
-            href="/"
-            style={{
-              display: "block",
-              textAlign: "center",
-              width: "100%",
-              padding: 15,
-              borderRadius: 15,
-              background: "linear-gradient(180deg,#F4977E,#EE8164)",
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: 16,
-              cursor: "pointer",
-              boxShadow: "0 10px 22px -8px rgba(238,129,100,.7)",
-            }}
-          >
-            Iniciar sesión
-          </a>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: 15,
+                borderRadius: 15,
+                border: "none",
+                background: "linear-gradient(180deg,#F4977E,#EE8164)",
+                color: "#fff",
+                fontWeight: 800,
+                fontSize: 16,
+                cursor: submitting ? "default" : "pointer",
+                opacity: submitting ? 0.7 : 1,
+                boxShadow: "0 10px 22px -8px rgba(238,129,100,.7)",
+                fontFamily: "inherit",
+              }}
+            >
+              {submitting ? "Ingresando…" : "Iniciar sesión"}
+            </button>
+
+            {error && (
+              <div style={{ marginTop: 18, color: "#C5503A", fontSize: 14, textAlign: "center" }}>
+                {error}
+              </div>
+            )}
+          </form>
 
           <p style={{ textAlign: "center", margin: "24px 0 0", color: "#94887B", fontSize: 14.5 }}>
             ¿Te invitó la guardería?{" "}
