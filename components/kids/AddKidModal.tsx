@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Kid, KidInput } from "@/lib/kids";
 import { buildKidFromInput } from "@/lib/kids";
-import { rooms } from "@/lib/rooms";
+export type SavedKid = Kid;
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
@@ -46,10 +46,12 @@ function isValidDate(birthday: string): boolean {
 
 export default function AddKidModal({
   existingSlugs,
+  rooms,
   onClose,
   onSave,
 }: {
   existingSlugs: string[];
+  rooms: string[];
   onClose: () => void;
   onSave: (kid: Kid) => void;
 }) {
