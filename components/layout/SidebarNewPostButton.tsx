@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { kids } from "@/lib/kids";
+import { kids } from "@/lib/mock-kids";
 import CrearPublicacionModal from "@/components/feed/CrearPublicacionModal";
 
 export default function SidebarNewPostButton() {
