@@ -1,15 +1,25 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import SidebarNewPostButton from "./SidebarNewPostButton";
+import LogoutButton from "./LogoutButton";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
 type NavKey = "feed" | "kids" | "avisos" | "mi-cuenta";
 
-type SidebarProps = {
-  active: "feed" | "kids";
+export type UserProfile = {
+  fullName: string;
+  avatarUrl: string | null;
+  initial: string;
+  roleLabel: string;
 };
 
-export default function Sidebar({ active }: SidebarProps) {
+type SidebarProps = {
+  active: "feed" | "kids";
+  user?: UserProfile | null;
+};
+
+export default function Sidebar({ active, user }: SidebarProps) {
   const navItems: { key: NavKey; label: string; href: string; icon: ReactNode }[] = [
     { key: "feed", label: "Feed", href: "/", icon: <HomeIcon /> },
     { key: "kids", label: "Niños", href: "/kids", icon: <KidsIcon /> },
@@ -32,7 +42,7 @@ export default function Sidebar({ active }: SidebarProps) {
         height: "100vh",
       }}
     >
-      <a
+      <Link
         href="/"
         style={{
           display: "flex",
@@ -68,12 +78,12 @@ export default function Sidebar({ active }: SidebarProps) {
           </svg>
         </div>
         <div>
-          <div style={{ ...fredoka, fontWeight: 600, fontSize: 17, color: "#3F362E", lineHeight: 1 }}>
-            OpenDayCare
+            <div style={{ ...fredoka, fontWeight: 600, fontSize: 17, color: "#3F362E", lineHeight: 1 }}>
+              OpenDayCare
+            </div>
+            <div style={{ fontSize: 11.5, color: "#A89A8B", marginTop: 2 }}>Sala Soles</div>
           </div>
-          <div style={{ fontSize: 11.5, color: "#A89A8B", marginTop: 2 }}>Sala Soles</div>
-        </div>
-      </a>
+      </Link>
       <SidebarNewPostButton />
       <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
         {navItems.map((item) => {
@@ -102,56 +112,48 @@ export default function Sidebar({ active }: SidebarProps) {
       </nav>
       <div style={{ borderTop: "1px solid #ECE0D0", paddingTop: 14, marginTop: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "6px 8px" }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
-              background: "#F2937A",
-              color: "#fff",
-              ...fredoka,
-              fontWeight: 600,
-              fontSize: 16,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flex: "none",
-            }}
-          >
-            C
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 14, color: "#3F362E" }}>Caro Giménez</div>
-            <div style={{ fontSize: 12, color: "#A89A8B" }}>Maestra · Soles</div>
-          </div>
-          <a
-            href="#"
-            title="Cerrar sesión"
-            style={{
-              flex: "none",
-              width: 32,
-              height: 32,
-              borderRadius: 10,
-              background: "#F6ECDF",
-              color: "#94887B",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {user?.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatarUrl}
+              alt={user.fullName}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                objectFit: "cover",
+                flex: "none",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                background: "#F2937A",
+                color: "#fff",
+                ...fredoka,
+                fontWeight: 600,
+                fontSize: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: "none",
+              }}
             >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-          </a>
+              {user?.initial ?? "C"}
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: "#3F362E" }}>
+              {user?.fullName ?? "Caro Giménez"}
+            </div>
+            <div style={{ fontSize: 12, color: "#A89A8B" }}>
+              {user?.roleLabel ?? "Maestra · Soles"}
+            </div>
+          </div>
+          <LogoutButton />
         </div>
       </div>
     </aside>
