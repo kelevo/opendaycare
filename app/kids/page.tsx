@@ -1,16 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import KidCard from "@/components/kids/KidCard";
-import AddKidModal from "@/components/kids/AddKidModal";
-import { kids, type Kid } from "@/lib/kids";
+import AddKidModal, { type SavedKid } from "@/components/kids/AddKidModal";
+import { createClient } from "@/lib/supabase/client";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
+type RoomRow = { id: string; name: string };
+
+type ChildRow = { id: string; room_id: string };
+
 export default function KidsPage() {
-  const [addedKids, setAddedKids] = useState<Kid[]>([]);
+  const supabase = createClient();
+  const [addedKids, setAddedKids] = useState<SavedKid[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [rooms, setRooms] = useState<RoomRow[]>([]);
+  const [childrenByRoom, setChildrenByRoom] = useState<Record<string, ChildRow[]>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const [roomsResult, childrenResult] = await Promise.all([
+        supabase.from("rooms").select("id, name"),
+        supabase.from("children").select("id, room_id"),
+      ]);
+
+      if (cancelled) return;
+
+      if (roomsResult.data) setRooms(roomsResult.data);
+
+      if (childrenResult.data) {
+        const grouped: Record<string, ChildRow[]> = {};
+        for (const child of childrenResult.data) {
+          if (!grouped[child.room_id]) grouped[child.room_id] = [];
+          grouped[child.room_id].push(child);
+        }
+        setChildrenByRoom(grouped);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
+
+  const roomSections = useMemo(() => {
+    const normalize = (value: string) => value.trim().toLowerCase();
+
+    const addedByRoom = new Map<string, SavedKid[]>();
+    for (const kid of addedKids) {
+      const key = normalize(kid.room);
+      const list = addedByRoom.get(key);
+      if (list) list.push(kid);
+      else addedByRoom.set(key, [kid]);
+    }
+
+    const sections: { key: string; name: string; count: number; added: SavedKid[] }[] = rooms.map(
+      (room) => ({
+        key: room.id,
+        name: room.name,
+        count: (childrenByRoom[room.id]?.length ?? 0) + (addedByRoom.get(normalize(room.name))?.length ?? 0),
+        added: addedByRoom.get(normalize(room.name)) ?? [],
+      }),
+    );
+
+    const covered = new Set(sections.map((section) => normalize(section.name)));
+    for (const [roomKey, kids] of addedByRoom) {
+      if (covered.has(roomKey)) continue;
+      sections.push({ key: `added-${roomKey}`, name: kids[0].room, count: kids.length, added: kids });
+      covered.add(roomKey);
+    }
+
+    return sections;
+  }, [rooms, childrenByRoom, addedKids]);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F6ECDF" }}>
@@ -103,17 +170,22 @@ export default function KidsPage() {
               style={{ flex: 1, border: "none", background: "none", fontSize: 15, color: "#3F362E" }}
             />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-            <span style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: ".8px", color: "#3F362E" }}>SALA SOLES</span>
-            <span style={{ fontSize: 13, color: "#A89A8B" }}>{kids.length} niños</span>
-            <span style={{ flex: 1, height: 1, background: "#E7DAC8" }} />
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14 }}>
-            {kids.map((kid) => (
-              <KidCard key={kid.slug} kid={kid} />
-            ))}
-            {addedKids.map((kid) => (
-              <KidCard key={kid.slug} kid={kid} href="#" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+            {roomSections.map((section) => (
+              <div key={section.key}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: ".8px", color: "#3F362E" }}>
+                    SALA {section.name.toUpperCase()}
+                  </span>
+                  <span style={{ fontSize: 13, color: "#A89A8B" }}>{section.count} niños</span>
+                  <span style={{ flex: 1, height: 1, background: "#E7DAC8" }} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14 }}>
+                  {section.added.map((kid) => (
+                    <KidCard key={kid.slug} kid={kid} href="#" />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -121,6 +193,7 @@ export default function KidsPage() {
 
       {showModal && (
         <AddKidModal
+          rooms={rooms.map((room) => room.name)}
           existingSlugs={addedKids.map((kid) => kid.slug)}
           onClose={() => setShowModal(false)}
           onSave={(kid) => {
