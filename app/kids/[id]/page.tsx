@@ -1,19 +1,32 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import Sidebar from "@/components/layout/Sidebar";
-import { getKidBySlug, kids } from "@/lib/kids";
+import { childRowToKid } from "@/lib/kids";
+import { createClient } from "@/lib/supabase/server";
 import VincularPadreModalWrapper from "@/components/kids/VincularPadreModalWrapper";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
-export function generateStaticParams() {
-  return kids.map((kid) => ({ slug: kid.slug }));
-}
+export default async function KidProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = createClient(await cookies());
+  const { id } = await params;
 
-export default async function KidProfilePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const kid = getKidBySlug(slug);
-  if (!kid) notFound();
+  const { data: row } = await supabase
+    .from("children")
+    .select("id, room_id, full_name, birth_date, enrolled_at, medical_notes, allergy_tags")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!row) notFound();
+
+  const { data: room } = await supabase
+    .from("rooms")
+    .select("name")
+    .eq("id", row.room_id)
+    .maybeSingle();
+
+  const kid = childRowToKid(row, room?.name ?? "—");
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F6ECDF" }}>

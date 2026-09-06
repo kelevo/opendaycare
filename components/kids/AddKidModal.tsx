@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Kid, KidInput } from "@/lib/kids";
-import { buildKidFromInput } from "@/lib/kids";
-export type SavedKid = Kid;
+import { createClient } from "@/lib/supabase/client";
+
+type RoomOption = { id: string; name: string };
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
@@ -45,35 +45,74 @@ function isValidDate(birthday: string): boolean {
 }
 
 export default function AddKidModal({
-  existingSlugs,
   rooms,
   onClose,
-  onSave,
+  onSaved,
 }: {
-  existingSlugs: string[];
-  rooms: string[];
+  rooms: RoomOption[];
   onClose: () => void;
-  onSave: (kid: Kid) => void;
+  onSaved: () => void;
 }) {
+  const supabase = createClient();
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [room, setRoom] = useState("");
   const [allergies, setAllergies] = useState("");
   const [notes, setNotes] = useState("");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const nameError = name.trim() === "" ? "Ingresá el nombre completo" : null;
   const birthdayError = !isValidDate(birthday) ? "Ingresá una fecha válida (dd/mm/aaaa)" : null;
   const roomError = room === "" ? "Elegí una sala" : null;
 
-  const canSave = !nameError && !birthdayError && !roomError;
+  const canSave = !nameError && !birthdayError && !roomError && !submitting;
 
   const touch = (field: string) => setTouched((prev) => ({ ...prev, [field]: true }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
-    const input: KidInput = { name, birthday, room, allergies, medicalNotes: notes };
-    onSave(buildKidFromInput(input, existingSlugs));
+
+    const roomOption = rooms.find((r) => r.name === room);
+    if (!roomOption) {
+      setSaveError("La sala elegida ya no existe. Recargá la página e intentá de nuevo.");
+      return;
+    }
+
+    const [day, month, year] = birthday.split("/").map(Number);
+    const birthDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    const today = new Date();
+    const enrolledAt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    const allergyTags = allergies
+      .split(",")
+      .map((tag) => tag.trim().toLowerCase())
+      .filter(Boolean);
+
+    setSubmitting(true);
+    setSaveError(null);
+
+    const { error } = await supabase.from("children").insert({
+      full_name: name.trim(),
+      birth_date: birthDate,
+      room_id: roomOption.id,
+      enrolled_at: enrolledAt,
+      medical_notes: notes.trim() || null,
+      allergy_tags: allergyTags,
+      photo_consent: true,
+      status: "active",
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      setSaveError("No se pudo guardar el niño. Intentá de nuevo.");
+      return;
+    }
+
+    onSaved();
   };
 
   const borderFor = (field: string, hasError: boolean) =>
@@ -148,6 +187,23 @@ export default function AddKidModal({
         </div>
 
         <div style={{ padding: "24px 26px" }}>
+          {saveError && (
+            <div
+              style={{
+                background: "#FBDAD6",
+                border: "1px solid #F0BDB4",
+                color: "#C5413A",
+                fontSize: 13.5,
+                fontWeight: 700,
+                borderRadius: 12,
+                padding: "10px 14px",
+                marginBottom: 16,
+              }}
+            >
+              {saveError}
+            </div>
+          )}
+
           <div style={labelStyle}>NOMBRE COMPLETO</div>
           <input
             placeholder="Ej. Martina López"
@@ -193,8 +249,8 @@ export default function AddKidModal({
                     Elegí sala
                   </option>
                   {rooms.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
+                    <option key={r.id} value={r.name}>
+                      {r.name}
                     </option>
                   ))}
                 </select>

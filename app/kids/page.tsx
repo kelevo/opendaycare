@@ -3,19 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import KidCard from "@/components/kids/KidCard";
-import AddKidModal, { type SavedKid } from "@/components/kids/AddKidModal";
+import AddKidModal from "@/components/kids/AddKidModal";
 import { createClient } from "@/lib/supabase/client";
+import { childRowToKid, type ChildRow, type Kid } from "@/lib/kids";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
 type RoomRow = { id: string; name: string };
 
-type ChildRow = { id: string; room_id: string };
-
 export default function KidsPage() {
   const supabase = createClient();
-  const [addedKids, setAddedKids] = useState<SavedKid[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [childrenByRoom, setChildrenByRoom] = useState<Record<string, ChildRow[]>>({});
 
@@ -25,7 +24,9 @@ export default function KidsPage() {
     async function load() {
       const [roomsResult, childrenResult] = await Promise.all([
         supabase.from("rooms").select("id, name"),
-        supabase.from("children").select("id, room_id"),
+        supabase
+          .from("children")
+          .select("id, room_id, full_name, birth_date, enrolled_at, medical_notes, allergy_tags"),
       ]);
 
       if (cancelled) return;
@@ -47,37 +48,20 @@ export default function KidsPage() {
     return () => {
       cancelled = true;
     };
-  }, [supabase]);
+  }, [supabase, reloadKey]);
 
   const roomSections = useMemo(() => {
     const normalize = (value: string) => value.trim().toLowerCase();
 
-    const addedByRoom = new Map<string, SavedKid[]>();
-    for (const kid of addedKids) {
-      const key = normalize(kid.room);
-      const list = addedByRoom.get(key);
-      if (list) list.push(kid);
-      else addedByRoom.set(key, [kid]);
-    }
+    const sections: { key: string; name: string; count: number; kids: Kid[] }[] = rooms.map((room) => {
+      const kids = (childrenByRoom[room.id] ?? []).map((child) => childRowToKid(child, room.name));
+      return { key: room.id, name: room.name, count: kids.length, kids };
+    });
 
-    const sections: { key: string; name: string; count: number; added: SavedKid[] }[] = rooms.map(
-      (room) => ({
-        key: room.id,
-        name: room.name,
-        count: (childrenByRoom[room.id]?.length ?? 0) + (addedByRoom.get(normalize(room.name))?.length ?? 0),
-        added: addedByRoom.get(normalize(room.name)) ?? [],
-      }),
-    );
-
-    const covered = new Set(sections.map((section) => normalize(section.name)));
-    for (const [roomKey, kids] of addedByRoom) {
-      if (covered.has(roomKey)) continue;
-      sections.push({ key: `added-${roomKey}`, name: kids[0].room, count: kids.length, added: kids });
-      covered.add(roomKey);
-    }
+    sections.sort((a, b) => normalize(a.name).localeCompare(normalize(b.name)));
 
     return sections;
-  }, [rooms, childrenByRoom, addedKids]);
+  }, [rooms, childrenByRoom]);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F6ECDF" }}>
@@ -181,8 +165,8 @@ export default function KidsPage() {
                   <span style={{ flex: 1, height: 1, background: "#E7DAC8" }} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14 }}>
-                  {section.added.map((kid) => (
-                    <KidCard key={kid.slug} kid={kid} href="#" />
+                  {section.kids.map((kid) => (
+                    <KidCard key={kid.slug} kid={kid} href={`/kids/${kid.slug}`} />
                   ))}
                 </div>
               </div>
@@ -193,11 +177,10 @@ export default function KidsPage() {
 
       {showModal && (
         <AddKidModal
-          rooms={rooms.map((room) => room.name)}
-          existingSlugs={addedKids.map((kid) => kid.slug)}
+          rooms={rooms}
           onClose={() => setShowModal(false)}
-          onSave={(kid) => {
-            setAddedKids((prev) => [...prev, kid]);
+          onSaved={() => {
+            setReloadKey((key) => key + 1);
             setShowModal(false);
           }}
         />
