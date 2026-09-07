@@ -1,8 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ActivatedNotice from "@/components/auth/ActivatedNotice";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
 
@@ -165,6 +167,10 @@ export default function LoginPage() {
           <p style={{ margin: "0 0 28px", color: "#94887B", fontSize: 15 }}>
             Ingresá para ver el día de hoy.
           </p>
+
+          <Suspense fallback={null}>
+            <ActivatedNotice />
+          </Suspense>
 
           <form onSubmit={handleSubmit}>
             <div

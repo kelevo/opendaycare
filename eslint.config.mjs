@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prototypes de referencia (soporte HTML de SPEC 01-05), ajenos al código de la app:
+    "references/**",
   ]),
 ]);
 

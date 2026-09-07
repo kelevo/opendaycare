@@ -6,7 +6,10 @@ export async function proxy(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;
-  const isPublicRoute = pathname === "/login" || pathname === "/activar-cuenta";
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/activar-cuenta" ||
+    pathname.startsWith("/api/activate");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

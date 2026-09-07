@@ -2,11 +2,17 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import Sidebar from "@/components/layout/Sidebar";
-import { childRowToKid } from "@/lib/kids";
+import { childRowToKid, type ParentLink } from "@/lib/kids";
 import { createClient } from "@/lib/supabase/server";
 import VincularPadreModalWrapper from "@/components/kids/VincularPadreModalWrapper";
 
 const fredoka = { fontFamily: "var(--font-fredoka)" } as const;
+
+const RELATIONSHIP_LABEL: Record<string, ParentLink["role"]> = {
+  father: "Papá",
+  mother: "Mamá",
+  guardian: "Tutor/a",
+};
 
 export default async function KidProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = createClient(await cookies());
@@ -27,6 +33,39 @@ export default async function KidProfilePage({ params }: { params: Promise<{ id:
     .maybeSingle();
 
   const kid = childRowToKid(row, room?.name ?? "—");
+
+  const linkedParents: ParentLink[] = [];
+
+  const { data: parentLinks } = await supabase
+    .from("parent_children")
+    .select("relationship, users(id, full_name)")
+    .eq("child_id", id);
+
+  for (const link of parentLinks ?? []) {
+    const user = Array.isArray(link.users) ? link.users[0] : link.users;
+    if (!user) continue;
+    linkedParents.push({
+      id: user.id,
+      name: user.full_name,
+      role: RELATIONSHIP_LABEL[link.relationship] ?? "Tutor/a",
+      status: "active",
+    });
+  }
+
+  const { data: pendingInvitations } = await supabase
+    .from("invitations")
+    .select("id, full_name, relationship")
+    .eq("child_id", id)
+    .eq("status", "pending");
+
+  for (const invitation of pendingInvitations ?? []) {
+    linkedParents.push({
+      id: invitation.id,
+      name: invitation.full_name,
+      role: RELATIONSHIP_LABEL[invitation.relationship] ?? "Tutor/a",
+      status: "pending",
+    });
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F6ECDF" }}>
@@ -179,8 +218,9 @@ export default async function KidProfilePage({ params }: { params: Promise<{ id:
                 Resumen del día
               </a>
               <VincularPadreModalWrapper
+                kidId={row.id}
                 kidName={`${kid.firstName} ${kid.lastName}`}
-                linkedParents={kid.linkedParents}
+                linkedParents={linkedParents}
               />
             </div>
           </div>
