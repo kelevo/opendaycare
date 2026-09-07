@@ -29,10 +29,20 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const UI_TO_DB: Record<(typeof PARENTES)[number], string> = {
+  "Mamá": "mother",
+  "Papá": "father",
+  "Tutor/a": "guardian",
+};
+
+type InviteState = "idle" | "loading" | "error" | "done";
+
 export default function VincularPadreModal({
+  kidId,
   kidName,
   onClose,
 }: {
+  kidId: string;
   kidName: string;
   onClose: () => void;
 }) {
@@ -40,15 +50,47 @@ export default function VincularPadreModal({
   const [email, setEmail] = useState("");
   const [parentesco, setParentesco] = useState<(typeof PARENTES)[number]>("Mamá");
   const [inviteCode] = useState(generateInviteCode);
+  const [state, setState] = useState<InviteState>("idle");
+  const [error, setError] = useState<string | null>(null);
 
   const nameError = parentName.trim() === "" ? "Ingresá el nombre del padre/madre" : null;
   const emailError = email.trim() === "" ? "Ingresá un email" : !isValidEmail(email) ? "Ingresá un email válido" : null;
+  const submitting = state === "loading";
 
   const borderFor = (hasError: boolean) =>
     hasError ? "1.5px solid #D9583C" : "1.5px solid #EADFD0";
 
-  const handleSubmit = () => {
-    onClose();
+  const handleSubmit = async () => {
+    if (nameError || emailError) return;
+    setState("loading");
+    setError(null);
+
+    try {
+      const res = await fetch("/api/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          childId: kidId,
+          fullName: parentName,
+          email,
+          relationship: UI_TO_DB[parentesco],
+          code: inviteCode,
+        }),
+      });
+
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(payload?.error ?? "No se pudo enviar la invitación.");
+        setState("error");
+        return;
+      }
+
+      setState("done");
+      setTimeout(onClose, 2000);
+    } catch {
+      setError("Hubo un error de red. Intentalo de nuevo.");
+      setState("error");
+    }
   };
 
   return (
@@ -236,41 +278,107 @@ export default function VincularPadreModal({
             <div style={{ fontSize: 13, color: "#A88526", marginTop: 6 }}>Vence en 7 días</div>
           </div>
 
-          {/* Enviar invitación */}
-          <button
-            onClick={handleSubmit}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 9,
-              width: "100%",
-              padding: 14,
-              borderRadius: 14,
-              background: "linear-gradient(180deg,#F4977E,#EE8164)",
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: 15.5,
-              boxShadow: "0 10px 22px -8px rgba(238,129,100,.7)",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <svg
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {state === "done" ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: "#CFEBD8",
+                borderRadius: 14,
+                padding: "14px 16px",
+                color: "#2F7A50",
+                fontWeight: 800,
+                fontSize: 15,
+              }}
             >
-              <path d="m22 2-7 20-4-9-9-4z" />
-              <path d="M22 2 11 13" />
-            </svg>
-            Enviar invitación
-          </button>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ flex: "none" }}
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m8.5 12.5 2.5 2.5 5-6" />
+              </svg>
+              Invitación enviada. Se cierra en unos segundos…
+            </div>
+          ) : (
+            <>
+              {state === "error" && error && (
+                <div
+                  style={{
+                    background: "#FBDAD6",
+                    color: "#B5413A",
+                    borderRadius: 12,
+                    padding: "12px 14px",
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    marginBottom: 14,
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+              {/* Enviar invitación */}
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 9,
+                  width: "100%",
+                  padding: 14,
+                  borderRadius: 14,
+                  background: "linear-gradient(180deg,#F4977E,#EE8164)",
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontSize: 15.5,
+                  boxShadow: "0 10px 22px -8px rgba(238,129,100,.7)",
+                  border: "none",
+                  cursor: submitting ? "default" : "pointer",
+                  opacity: submitting ? 0.7 : 1,
+                }}
+              >
+                {submitting ? (
+                  <svg
+                    width="19"
+                    height="19"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
+                    <path className="spinner-arc" d="M12 3a9 9 0 1 0 9 9" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="19"
+                    height="19"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m22 2-7 20-4-9-9-4z" />
+                    <path d="M22 2 11 13" />
+                  </svg>
+                )}
+                {submitting ? "Enviando…" : "Enviar invitación"}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

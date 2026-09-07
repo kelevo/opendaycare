@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ParentLink } from "@/lib/kids";
 import VincularPadreModal from "./VincularPadreModal";
 
@@ -12,13 +13,21 @@ const parentAvatarPalette: { bg: string; color: string }[] = [
 ];
 
 export default function VincularPadreModalWrapper({
+  kidId,
   kidName,
   linkedParents,
 }: {
+  kidId: string;
   kidName: string;
   linkedParents: ParentLink[];
 }) {
   const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
+
+  const handleClose = () => {
+    setShowModal(false);
+    router.refresh();
+  };
 
   return (
     <>
@@ -82,7 +91,7 @@ export default function VincularPadreModalWrapper({
       </div>
 
       {showModal && (
-        <VincularPadreModal kidName={kidName} onClose={() => setShowModal(false)} />
+        <VincularPadreModal kidId={kidId} kidName={kidName} onClose={handleClose} />
       )}
     </>
   );

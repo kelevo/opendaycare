@@ -51,3 +51,13 @@ a {
   border-color: #f2a78e;
   transform: translateY(-2px);
 }
+
+.spinner-arc {
+  animation: spin-arc 0.8s linear infinite;
+  transform-origin: center;
+}
+@keyframes spin-arc {
+  to {
+    transform: rotate(360deg);
+  }
+}
