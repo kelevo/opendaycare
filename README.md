@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Open Daycare
 
-## Getting Started
+Sistema de gestión para guardería infantil. Administra niños, padres, asistencia y más.
 
-First, run the development server:
+## Stack
+
+- **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
+- **Estilos:** Tailwind CSS v4
+- **Base de datos:** Supabase (PostgreSQL + Auth + Realtime)
+- **Email:** Resend
+- **AI Agent:** opencode + MCPs (Playwright, Context7, Supabase)
+
+## Requisitos previos
+
+- [Node.js](https://nodejs.org/) >= 18
+- npm
+- [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (para desarrollo local con BD)
+- Cuenta de [Supabase](https://supabase.com) con un proyecto creado
+- API key de [Resend](https://resend.com) (para envío de emails)
+
+## Setup
+
+1. Clonar el repositorio:
+
+```bash
+git clone <repo-url>
+cd open-daycare
+```
+
+2. Instalar dependencias:
+
+```bash
+npm install
+```
+
+3. Configurar variables de entorno:
+
+```bash
+cp .env.template .env.local
+```
+
+Editar `.env.local` con tus valores:
+
+| Variable | Descripción |
+|---|---|
+| `SUPABASE_DB_PASSWORD` | Password de la BD de Supabase |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (para frontend) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (solo server-side) |
+| `RESEND_API_KEY` | API key de Resend |
+
+4. Levantar el dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Autenticación con Supabase CLI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+El proyecto usa el MCP server de Supabase para interactuar con la BD desde opencode. Para que funcione correctamente, necesitás autenticarte:
 
-## Learn More
+### Login con Supabase CLI
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+supabase login
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Esto abre el browser para autenticarte con tu cuenta de Supabase. Después seleccionás el proyecto:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+supabase link --project-ref <tu-project-ref>
+```
 
-## Deploy on Vercel
+### Autenticación del MCP Server
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+El MCP server de Supabase usa OAuth 2.1. Si los tools de Supabase no aparecen en opencode:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Verificar que el server sea alcanzable:
+   ```bash
+   curl -so /dev/null -w "%{http_code}" https://mcp.supabase.com/mcp
+   ```
+   Un `401` (sin token) confirma que el server está arriba.
+
+2. Crear `.mcp.json` en la raíz del proyecto apuntando a `https://mcp.supabase.com/mcp` si no existe.
+
+3. Autenticar desde opencode — el agente te guiará para completar el flow OAuth en el browser, y después recargar la sesión.
+
+## Comandos disponibles
+
+```bash
+npm run dev      # Dev server en puerto 3000
+npm run build    # Build de producción (incluye type checking)
+npm run start    # Servir build de producción
+npm run lint     # Linting con ESLint
+```
+
+> **No hay test runner configurado.** Para verificar tipos, usá `npm run build`.
+
+## Estructura del proyecto
+
+```
+open-daycare/
+├── app/              # App Router - páginas y layouts
+├── components/       # Componentes React
+├── lib/              # Utilidades, clientes de Supabase, helpers
+├── public/           # Assets estáticos
+├── specs/            # Specs y documentación de features
+│   └── database/     # Referencias SQL, schemas, seeds
+├── supabase/
+│   └── migrations/   # Migraciones SQL de la BD
+└── .claude/skills/   # Skills para AI agents
+```
