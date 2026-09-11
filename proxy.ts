@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 import { updateSession } from "@/lib/supabase/proxy";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
 export async function proxy(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
@@ -21,6 +25,42 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
+  }
+
+  if (user) {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll() {},
+      },
+    });
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const role = profile?.role as string | undefined;
+    const isStaffRole = role === "admin" || role === "staff";
+    const isParentRole = role === "parent";
+
+    const isStaffRoute = pathname.startsWith("/staff");
+    const isFamilyRoute = pathname.startsWith("/family");
+
+    if (isStaffRole && isFamilyRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/staff";
+      return NextResponse.redirect(url);
+    }
+
+    if (isParentRole && isStaffRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/family";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

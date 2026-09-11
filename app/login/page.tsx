@@ -22,7 +22,7 @@ export default function LoginPage() {
     setSubmitting(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError("Credenciales inválidas. Verificá tu email y contraseña.");
@@ -30,7 +30,18 @@ export default function LoginPage() {
       return;
     }
 
-    router.replace("/");
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    const role = profile?.role;
+    if (role === "admin" || role === "staff") {
+      router.replace("/staff");
+    } else {
+      router.replace("/family");
+    }
   }
 
   return (

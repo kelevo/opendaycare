@@ -14,18 +14,31 @@ export type UserProfile = {
   roleLabel: string;
 };
 
+export type SidebarRole = "admin" | "staff" | "parent";
+
 type SidebarProps = {
   active: "feed" | "kids";
+  role: SidebarRole;
   user?: UserProfile | null;
 };
 
-export default function Sidebar({ active, user }: SidebarProps) {
-  const navItems: { key: NavKey; label: string; href: string; icon: ReactNode }[] = [
-    { key: "feed", label: "Feed", href: "/", icon: <HomeIcon /> },
-    { key: "kids", label: "Niños", href: "/kids", icon: <KidsIcon /> },
-    { key: "avisos", label: "Avisos", href: "#", icon: <BellIcon /> },
-    { key: "mi-cuenta", label: "Mi cuenta", href: "#", icon: <UserIcon /> },
-  ];
+export default function Sidebar({ active, role, user }: SidebarProps) {
+  const isStaff = role === "admin" || role === "staff";
+  const prefix = isStaff ? "/staff" : "/family";
+
+  const navItems: { key: NavKey; label: string; href: string; icon: ReactNode }[] = isStaff
+    ? [
+        { key: "feed", label: "Feed", href: prefix, icon: <HomeIcon /> },
+        { key: "kids", label: "Niños", href: `${prefix}/kids`, icon: <KidsIcon /> },
+        { key: "avisos", label: "Avisos", href: `${prefix}/avisos`, icon: <BellIcon /> },
+        { key: "mi-cuenta", label: "Mi cuenta", href: `${prefix}/cuenta`, icon: <UserIcon /> },
+      ]
+    : [
+        { key: "feed", label: "Feed", href: prefix, icon: <HomeIcon /> },
+        { key: "kids", label: "Mis hijos", href: `${prefix}/hijos`, icon: <KidsIcon /> },
+        { key: "avisos", label: "Notificaciones", href: `${prefix}/notificaciones`, icon: <BellIcon /> },
+        { key: "mi-cuenta", label: "Mi cuenta", href: `${prefix}/cuenta`, icon: <UserIcon /> },
+      ];
 
   return (
     <aside
@@ -43,7 +56,7 @@ export default function Sidebar({ active, user }: SidebarProps) {
       }}
     >
       <Link
-        href="/"
+        href={prefix}
         style={{
           display: "flex",
           alignItems: "center",
@@ -84,7 +97,7 @@ export default function Sidebar({ active, user }: SidebarProps) {
             <div style={{ fontSize: 11.5, color: "#A89A8B", marginTop: 2 }}>Sala Soles</div>
           </div>
       </Link>
-      <SidebarNewPostButton />
+      {isStaff && <SidebarNewPostButton />}
       <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
         {navItems.map((item) => {
           const isActive = item.key === active;

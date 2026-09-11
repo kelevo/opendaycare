@@ -1,0 +1,48 @@
+schema: spec-driven
+
+context: |
+  **Open Daycare** — Sistema de gestión para guarderías (app en español).
+
+  Dominio: Plataforma para que personal y familias compartan actualizaciones diarias
+  sobre los niños (logros, actividades, anuncios) en un feed estilo social.
+
+  Stack:
+  - Next.js 16 (App Router) + React 19 + TypeScript (strict)
+  - Tailwind CSS v4 (sin tailwind.config, tema vía @theme inline en CSS)
+  - Supabase (PostgreSQL + RLS + Auth con @supabase/ssr)
+  - Resend (emails transaccionales para invitaciones)
+  - Fonts: Fredoka + Nunito
+
+  Roles: admin, staff (maestra), parent (familia)
+  RLS: Todas las tablas scoping por daycare vía función SQL current_daycare_id()
+
+  Tablas clave: daycares, users, rooms, children, invitations, parent_children
+
+  Convenciones:
+  - Path alias @/* → raíz del repo
+  - Migraciones SQL en supabase/migrations/ (formato YYYYMMDDHHMMSS_<nombre>.sql)
+  - Docs de BD en specs/database/
+  - Verificación: npm run build (tipos) + npm run lint (ESLint flat config)
+  - NO hay test runner configurado
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
